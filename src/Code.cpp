@@ -3,11 +3,6 @@
     #include "../headers/Code.h" 
 #endif
 
-#ifndef WRONG_BYTE
-#define WRONG_BYTE
-    #include "../headers/wrong_byte.h"
-#endif
-
 Code::Code(unsigned short Byte, const std::size_t& b_Code, unsigned int Length) :
 byte(Byte), code(b_Code), length(Length) {}
 

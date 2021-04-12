@@ -3,6 +3,21 @@
     #include "../Abstract/Archiver.h" 
 #endif
 
+#ifndef STATTREE
+#define STATTREE
+    #include "../../headers/Stat/StatTree.h"
+#endif
+
+#ifndef STATTABLE
+#define STATTABLE
+    #include "../../headers/Stat/StatTable.h"
+#endif
+
+#ifndef FSTREAM
+#define FSTREAM
+    #include <fstream>
+#endif
+
 class StatArchiver final : public Archiver
 {
     public:

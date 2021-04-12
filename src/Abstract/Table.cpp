@@ -1,4 +1,8 @@
 #include "../../headers/Abstract/Table.h" 
+#ifndef IOSTREAM
+#define IOSTREAM
+    #include <iostream>
+#endif
 
 Table::Table() : outp_byte() {}
 

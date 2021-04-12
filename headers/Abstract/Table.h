@@ -25,6 +25,7 @@ class Table
         Table();
         Table(const Table& tb);
         Table(Table&& tb);
+
         void write_code(const Code& cd, std::vector<char>& encrypted);
         Table& operator = (const Table& tb) = delete;
         Table& operator = (Table&& tb) = delete;
