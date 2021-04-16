@@ -8,6 +8,11 @@
     #include <vector>
 #endif
 
+#ifndef STDEXCEPT
+#define STDEXCEPT
+    #include <stdexcept>
+#endif
+
 class Table
 {
     public:
