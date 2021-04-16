@@ -4,7 +4,7 @@ In development
 ## How to install
 1. clone this repsitory _git clone https://github.com/Stalker7101/Archiver.git_
 2. make dir for build files and go to it
-3. run cmake _../(path to dir with project Archiver)_
+3. run _cmake (path to dir with project Archiver)_
 4. run _./make_
 
 ## How to use
