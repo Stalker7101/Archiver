@@ -5,7 +5,7 @@ In development
 1. clone this repsitory _git clone https://github.com/Stalker7101/Archiver.git_
 2. make dir for build files and go to it
 3. run _cmake (path to dir with project Archiver)_
-4. run _./make_
+4. run _make_
 
 ## How to use
 When file is arcvive it has addition extention .darch or .sarch
