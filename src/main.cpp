@@ -58,6 +58,8 @@ void ChoiceArchUnarch(Archiver& archiver) {
 
         while (!success && !exit) {
 
+            no_except = true;
+
             std::cout << "Enter name of file which you want to archive : ";
             std::cin >> nof;
 
@@ -99,6 +101,8 @@ void ChoiceArchUnarch(Archiver& archiver) {
         std::string un_nof = "";
 
         while (!success && !exit) {
+
+            no_except = true;
 
             std::cout << "Enter name of file which you want to unarchive : ";
             std::cin >> nof;
