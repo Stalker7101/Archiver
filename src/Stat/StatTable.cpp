@@ -3,7 +3,17 @@
     #include "../../headers/Stat/StatTable.h"
 #endif
  
-StatTable::StatTable(StatTree& str) : Table(), table(new Code [256]) {
+StatTable::StatTable(StatTree& str) : Table(), table(new Code [256]), bad_state(false) {
+
+    // if tree is in bad state
+    if (str.is_bad_state()) {
+
+        // set bad state flag of table in true too 
+        bad_state = true;
+
+        // and return from constructor
+        return;
+    }
 
     // reset curr_node_pub to root
     str.move_to_root();
@@ -14,6 +24,13 @@ StatTable::StatTable(StatTree& str) : Table(), table(new Code [256]) {
 }
 
 std::vector<char> StatTable::encrypt(const std::vector<char>& bytes_to_encrypt) {
+
+    // if table in bad state
+    if (bad_state) {
+        
+        // return empty vector
+        return std::vector<char>(0);
+    }
     
     // initialization of return vector with encrypted information
     std::vector<char> encrypted;
@@ -38,22 +55,29 @@ std::vector<char> StatTable::encrypt(const std::vector<char>& bytes_to_encrypt) 
     return encrypted;
 }
 
-StatTable::StatTable(const StatTable& stb) : Table(stb), table(new Code [256]) {
+StatTable::StatTable(const StatTable& stb) :
+    Table(stb), table(new Code [256]), bad_state(stb.bad_state) {
     
     for(int i = 0; i < 256; i++)
         table[i] = stb.table[i];
 }
 
 StatTable::StatTable(StatTable&& stb) :
-Table(std::move(stb)), table(std::move(stb.table)) {}
+    Table(std::move(stb)), table(std::move(stb.table)), bad_state(stb.bad_state) {}
 
 StatTable& StatTable::operator = (const StatTable& stb) {
     
     if(this == &stb){
+
         return * this;
+
     } else {
+
+        bad_state = stb.bad_state;
+
         for(int i = 0; i < 256; i++)
             table[i] = stb.table[i];
+
         return * this;
     }
 }
@@ -61,8 +85,13 @@ StatTable& StatTable::operator = (const StatTable& stb) {
 StatTable& StatTable::operator = (StatTable&& stb) {
 
     if(this == &stb){
+
         return * this;
+
     } else {
+
+        bad_state = stb.bad_state;
+
         table = std::move(stb.table);
         return * this;
     }
@@ -70,7 +99,10 @@ StatTable& StatTable::operator = (StatTable&& stb) {
 
 const Code& StatTable::operator [] (unsigned int i) const {
 
-    /// EXCEPTION OUT OF RANGE ///
+    if(i > 255){
+
+        throw std::out_of_range("index out of range StatTable");
+    }
     
     return table[i];
 }

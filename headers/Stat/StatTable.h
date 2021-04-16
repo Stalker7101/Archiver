@@ -45,4 +45,5 @@ class StatTable final : public Table
                             std::size_t code, unsigned int length);
 
         std::shared_ptr<Code[]> table;
+        bool bad_state;
 };

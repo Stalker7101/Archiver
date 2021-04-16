@@ -3,11 +3,6 @@
     #include <string>
 #endif
 
-#ifndef WRONG_BYTE
-#define WRONG_BYTE
-    #include "../headers/wrong_byte.h"
-#endif
-
 #ifndef NO_INF_SIGN
     #define NO_INF_SIGN 0x300
 #endif

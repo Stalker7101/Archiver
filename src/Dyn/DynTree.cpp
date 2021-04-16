@@ -30,9 +30,12 @@ unsigned int DynTree::get_curr_pos() const {
 bool DynTree::move_prev() {
 
     if(tree[curr_node_pub].get_prev() != NOTHING){
+
         curr_node_pub = tree[curr_node_pub].get_prev();
         return true;
+
     } else {
+
         return false;
     }
 }
@@ -61,9 +64,12 @@ bool DynTree::move_left() {
 bool DynTree::move_right() {
 
     if(tree[curr_node_pub].get_right() != NOTHING){
+
         curr_node_pub = tree[curr_node_pub].get_right();
         return true;
+
     } else {
+
         return false;
     }
 }
@@ -78,7 +84,7 @@ unsigned short DynTree::get_curr_byte() const {
     return tree[curr_node_pub].get_byte();
 }
 
-const std::size_t& DynTree::get_curr_freq() const {
+std::size_t DynTree::get_curr_freq() const {
 
     return tree[curr_node_pub].get_freq();
 }
@@ -153,6 +159,7 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
                     }
 
                 } else {
+
                     // if any leaf with simple byte is reached
                     
                     // cast node's 'byte' with addtional service information
@@ -169,10 +176,13 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
                     curr_node_prot = 0;
 
                     if(bytes_to_decrypt[i] & (1 << (7 - j))){
+
                         // protected current node in case next
                         // bit is 1 and then next node is right child
                         curr_node_prot = tree[curr_node_prot].get_right();
+
                     } else {
+
                         // protected current node in case next
                         // bit is 0 and then next node is left child
                         curr_node_prot = tree[curr_node_prot].get_left();
@@ -182,10 +192,13 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
             } else {
 
                 if(bytes_to_decrypt[i] & (1 << (7 - j))){
+
                     // protected current node in case next
                     // bit is 1 and then next node is right child
                     curr_node_prot = tree[curr_node_prot].get_right();
+
                 } else {
+
                     // protected current node in case next
                     // bit is 0 and then next node is left child
                     curr_node_prot = tree[curr_node_prot].get_left();
@@ -193,7 +206,7 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
             }
         }
     }
-    
+
     return deciphered;
 }
 
@@ -210,6 +223,7 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
     for(unsigned int i = 0; i < bits.second; i++){
 
         if(tree[curr_node_prot].is_leaf()){
+
             // if some leaf of the tree is reached
 
             unsigned short ush_byte = tree[curr_node_prot].get_byte();
@@ -263,11 +277,11 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
                 }
 
             } else {
+
                 // if any leaf with simple byte is reached
 
                 // cast node's 'byte' with possible addtional service
                 // information from unsigned short to char (real byte)
-
                 char ch_byte = static_cast<char>(ush_byte);
 
                 // write reached and after casted byte in return vector
@@ -280,10 +294,13 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
                 curr_node_prot = 0;
 
                 if(bits.first & (1 << (7 - i))){
+
                     // protected current node in case next
                     // bit is 1 and then next node is right child
                     curr_node_prot = tree[curr_node_prot].get_right();
+
                 } else {
+
                     // protected current node in case next
                     // bit is 0 and then next node is left child
                     curr_node_prot = tree[curr_node_prot].get_left();
@@ -293,10 +310,13 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
         } else {
 
             if(bits.first & (1 << (7 - i))){
+
                 // protected current node in case next
                 // bit is 1 and then next node is right child
                 curr_node_prot = tree[curr_node_prot].get_right();
+
             } else {
+
                 // protected current node in case next
                 // bit is 0 and then next node is left child
                 curr_node_prot = tree[curr_node_prot].get_left();
@@ -312,7 +332,6 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
 
         // cast node's 'byte' with possible addtional service
         // information from unsigned short to char (real byte)
-
         char ch_byte = static_cast<char>(ush_byte);
 
         // write reached and after casted byte in return vector
@@ -351,8 +370,11 @@ DynTree::DynTree(DynTree&& dtr) :
 DynTree& DynTree::operator = (const DynTree& dtr) {
     
     if(this == &dtr){
+
         return * this;
+
     } else {
+
         nyt_index = dtr.nyt_index;
         first_seen_byte = dtr.first_seen_byte;
         curr_node_prot = dtr.curr_node_prot;
@@ -365,8 +387,11 @@ DynTree& DynTree::operator = (const DynTree& dtr) {
 DynTree& DynTree::operator = (DynTree&& dtr) {
 
     if(this == &dtr){
+
         return * this;
+
     } else {
+
         do_move(std::move(dtr));
         return * this;
     }
@@ -376,10 +401,6 @@ void DynTree::update_byte_tree(unsigned short b) {
     
     // initialization
     int leaf_to_increment = NOTHING;
-
-    /// EXCEPTION ///
-    
-    // !!! exception if b > 255 !!!
     
     int p = leafs[static_cast<unsigned int>(b)];
 

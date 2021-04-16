@@ -57,7 +57,7 @@ class DynTree final : public Tree
         virtual bool move_right();
         virtual void move_to_root();
         virtual unsigned short get_curr_byte() const;
-        virtual const std::size_t& get_curr_freq() const;
+        virtual std::size_t get_curr_freq() const;
 
         virtual std::vector<char> decrypt(const std::vector<char>& bytes_to_decrypt);
         virtual std::vector<char> decrypt_bits(const std::pair<char, unsigned int>& bits);

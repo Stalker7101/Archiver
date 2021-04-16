@@ -18,8 +18,12 @@
     #include <queue>
 #endif
 
+#ifndef FSTREAM
+#define FSTREAM
+    #include <fstream>
+#endif
 
-class StatTree final : public Tree ///
+class StatTree final : public Tree
 {
     public:
         
@@ -53,7 +57,12 @@ class StatTree final : public Tree ///
         virtual bool move_right();
         virtual void move_to_root();
         virtual unsigned short get_curr_byte() const;
-        virtual const std::size_t& get_curr_freq() const;
+        virtual std::size_t get_curr_freq() const;
+
+        // state flags of object
+        bool is_bad_state() const;
+        bool is_success_file_open() const;
+        bool is_bad_tree() const;
 
         // operators of assignment
         StatTree& operator = (const StatTree& str);
@@ -63,9 +72,6 @@ class StatTree final : public Tree ///
 
         virtual std::vector<char> decrypt_bits(const std::pair<char,
                                                                unsigned int>& bits);
-
-        //void rec_show_table(const std::shared_ptr<const StatNode>& stn,
-        //                       std::size_t code, unsigned int length); 
 
         virtual ~StatTree();
 
@@ -104,4 +110,7 @@ class StatTree final : public Tree ///
         std::pair<std::size_t, unsigned int> route_curr_pub;
         std::string interacting_nf;
         StatTree::Mode mode;
+        bool bad_state;
+        bool success_file_open;
+        bool bad_tree;
 };

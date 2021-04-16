@@ -71,8 +71,11 @@ DynTable::DynTable(DynTable&& dtb) :
 DynTable& DynTable::operator = (const DynTable& dtb) {
 
     if(this == &dtb){
+
         return * this;
+
     } else {
+
         dyn_tree = dtb.dyn_tree;
         ret_Code.reset(new Code(* dtb.ret_Code));
         return * this;
@@ -82,8 +85,11 @@ DynTable& DynTable::operator = (const DynTable& dtb) {
 DynTable& DynTable::operator = (DynTable&& dtb) {
     
     if(this == &dtb){
+
         return * this;
+
     } else {
+        
         dyn_tree = dtb.dyn_tree;
         dtb.dyn_tree = nullptr;
         ret_Code = std::move(dtb.ret_Code);
@@ -94,7 +100,8 @@ DynTable& DynTable::operator = (DynTable&& dtb) {
 const Code& DynTable::operator [] (unsigned int i) const {
 
     if(i > 255){
-        /// EXCEPTION ///
+
+        throw std::out_of_range("index out of range DynTable");
     }
 
     // init return byte in casted argument
@@ -105,6 +112,7 @@ const Code& DynTable::operator [] (unsigned int i) const {
 
     // if there is no such byte in tree yet
     if(curr_pos == NOTHING){
+
         curr_pos = dyn_tree->nyt_index;
         ret_byte = NYT_NODE_SIGN;
     }

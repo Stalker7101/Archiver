@@ -22,7 +22,7 @@ class Tree
         virtual bool move_right() = 0;
         virtual void move_to_root() = 0;
         virtual unsigned short get_curr_byte() const = 0;
-        virtual const std::size_t& get_curr_freq() const = 0;
+        virtual std::size_t get_curr_freq() const = 0;
 
         virtual ~Tree();
 

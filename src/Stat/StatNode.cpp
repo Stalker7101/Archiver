@@ -14,13 +14,13 @@ StatNode::StatNode(unsigned short Byte, const std::size_t& Freq,
                    const std::shared_ptr<StatNode>& Left,
                    const std::shared_ptr<StatNode>& Right) :
 
-Node(Byte, Freq), left(Left), right(Right) {}
+    Node(Byte, Freq), left(Left), right(Right) {}
 
 StatNode::StatNode(std::shared_ptr<StatNode>&& Left,
                    std::shared_ptr<StatNode>&& Right,
                    unsigned short Byte, const std::size_t& Freq) :
 
-Node(Byte, Freq), left(std::move(Left)), right(std::move(Right)) {}
+    Node(Byte, Freq), left(std::move(Left)), right(std::move(Right)) {}
 
 std::shared_ptr<const StatNode> StatNode::get_left() const {
 
@@ -62,13 +62,16 @@ StatNode::~StatNode() {}
 StatNode::StatNode(const StatNode& stn) : Node(stn), left(nullptr), right(nullptr) {}
 
 StatNode::StatNode(StatNode&& stn) :
-Node(std::move(stn)), left(std::move(stn.left)), right(std::move(stn.right)) {}
+    Node(std::move(stn)), left(std::move(stn.left)), right(std::move(stn.right)) {}
 
 StatNode& StatNode::operator = (const StatNode& stn) {
 
     if(this == &stn){
+
         return * this;
+
     } else {
+
         byte = stn.byte;
         freq = stn.freq;
         left.reset();
@@ -80,8 +83,11 @@ StatNode& StatNode::operator = (const StatNode& stn) {
 StatNode& StatNode::operator = (StatNode&& stn) {
     
     if(this == &stn){
+
         return * this;
+
     } else {
+
         byte = stn.byte;
         stn.byte = static_cast<unsigned short>(NO_INF_SIGN);
         freq = std::move(stn.freq);

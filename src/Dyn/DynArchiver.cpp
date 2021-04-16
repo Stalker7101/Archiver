@@ -7,27 +7,15 @@ DynArchiver::DynArchiver() : Archiver() {}
 
 std::string DynArchiver::arch(const std::string& nf_to_arch) const {
 
-    // initialize coding tree
-    DynTree tree;
-
-    // initialize coding table for encrypting
-    // with help of information from tree
-    DynTable table(tree);
-
-    // defining name of archived file
-    std::string res_nf = nf_to_arch + ".darch";
-
-    // open new archived file
-    std::ofstream archived(res_nf, std::ios::binary | std::ios::app);
-
-    // output the byte with information about length
-    // of rest byte (in bits)
-    // now it has zero value, it will change farther
-    char length_of_last = 0;
-    archived << length_of_last;
-
     // open original file
     std::ifstream original(nf_to_arch, std::ios::binary);
+
+    // check is it open
+    if (!original.is_open()) {
+
+        // if not throw exception
+        throw Archiver::cant_open_file_error(nf_to_arch);
+    }
 
     // get necessary information about file
     
@@ -49,8 +37,38 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
     if(rest_file){
         // if there is rest of file that
         // doesn't fill block size completely
+        
         num_iters++;
     }
+
+    // initialize coding tree
+    DynTree tree;
+
+    // initialize coding table for encrypting
+    // with help of information from tree
+    DynTable table(tree);
+
+    // defining name of archived file
+    std::string res_nf = nf_to_arch + ".darch";
+
+    // check if file with name res_nf already exist
+    std::ifstream arch_in(res_nf, std::ios::binary);
+
+    if (arch_in.is_open()) {
+
+        // if exist close file and throw exception
+        arch_in.close();
+        throw Archiver::write_in_exist_file_error(res_nf);
+    }
+
+    // open new archived file
+    std::ofstream archived(res_nf, std::ios::binary | std::ios::app);
+
+    // output the byte with information about length
+    // of rest byte (in bits)
+    // now it has zero value, it will change farther
+    char length_of_last = 0;
+    archived << length_of_last;
 
     // create read buffer
     std::vector<char> Read(block_size);
@@ -112,17 +130,43 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
     return res_nf;
 }
 
-std::string DynArchiver::unarch(const std::string& nf_to_unarch) const {
+std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::string& Res_nf) const {
+
+    // open file with archived information
+    std::ifstream archived(nf_to_unarch, std::ios::binary);
+
+    // check is it open
+    if (!archived.is_open()) {
+
+        // if not throw exception
+        throw Archiver::cant_open_file_error(nf_to_unarch);
+    }
+
+    // find begining of substr with archived file extention
+    std::size_t point = nf_to_unarch.rfind(".darch");
+
+    // if there is no such substr
+    if (point == std::string::npos) {
+        
+        // throw exception
+        throw Archiver::file_is_not_archive(nf_to_unarch);
+    }
 
     // initializing coding tree
     DynTree tree;
 
-    // defining the name of unarchived file
-    int point = nf_to_unarch.find(".darch");
-    std::string res_nf =  nf_to_unarch.substr(0, point);
+    std::string res_nf = "";
 
-    // open file with archived information
-    std::ifstream archived(nf_to_unarch, std::ios::binary);
+    if (Res_nf.size() != 0) {
+        
+        res_nf = Res_nf;
+
+    } else {
+
+        // define unarchived file name as
+        // substr without archive extention
+        res_nf =  nf_to_unarch.substr(0, point);
+    }
 
     // get length of encryption rest
     char len_rest_encr = 0; 
@@ -131,6 +175,14 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch) const {
     // cast it to unsigned int
     unsigned char uch_len_rest_encr = static_cast<unsigned char>(len_rest_encr);
     unsigned int ui_len_rest_encr = static_cast<unsigned int>(uch_len_rest_encr);
+
+    // it's impossible for archive have len of last more that 7
+    if (ui_len_rest_encr > 7) {
+        
+        // in this case throw exception
+        // it's not archive
+        throw Archiver::file_is_not_archive(nf_to_unarch);
+    }
 
     // initialize start of decryption position
     // in 1 becouse fist byte is already read
@@ -161,6 +213,16 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch) const {
 
     // create read buffer
     std::vector<char> Read(block_size);
+
+    // check if file with name res_nf already exist
+    std::ifstream unarch_in(res_nf, std::ios::binary);
+
+    if (unarch_in.is_open()) {
+
+        // if exist close file and throw exception
+        unarch_in.close();
+        throw Archiver::write_in_exist_file_error(res_nf);
+    }
 
     // open new file with unarchived information
     std::ofstream unarchived(res_nf, std::ios::binary | std::ios::app);
@@ -266,6 +328,19 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch) const {
             // write decrypted information in unarchived file
             unarchived.write(&Decrypted[0], Decrypted.size());
         }
+
+        // call function to decrypt last byte even if
+        // there is no such byte in order to write
+        // last seen but not written byte
+
+        // initialization of last encrypted bits
+        std::pair<char, unsigned int> last_encr(0, 0);
+
+        // decrypt last bits from archived file
+        std::vector<char> Decrypted(tree.decrypt_bits(last_encr));
+
+        // write decrypted last bits in unarchived file
+        unarchived.write(&Decrypted[0], Decrypted.size());
     }
 
     // close both archived and unarchived files

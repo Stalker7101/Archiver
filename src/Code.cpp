@@ -33,9 +33,15 @@ unsigned int Code::get_length() const {
 
 void Code::reset_byte(unsigned short Byte) {
 
-    if((Byte <= 0x0FF) || ((Byte == 0x100) || (Byte == 0x200) || (Byte == 0x300)))
+    if ((Byte <= 0x0FF) || ((Byte == 0x100)
+        || (Byte == 0x200) || (Byte == 0x300))) {
+
         byte = Byte;
-    else throw wrong_byte(Byte);
+
+    } else {
+
+        byte = NO_INF_SIGN;
+    }
 }
 
 void Code::reset_code(const std::size_t& b_Code) {

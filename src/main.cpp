@@ -1,73 +1,183 @@
-#ifndef STATARCHIVER
-#define STATARCHIVER
-    #include "../headers/Stat/StatArchiver.h"
-#endif
+#include "../headers/Stat/StatArchiver.h"
+#include "../headers/Dyn/DynArchiver.h"
 
-#ifndef DYNARCHIVER
-#define DYNARCHIVER
-    #include "../headers/Dyn/DynArchiver.h"
-#endif
+#include <limits>
 
 #ifndef IOSTREAM
 #define IOSTREAM
     #include <iostream>
 #endif
 
-int main() {
+int IntConsoleInput(const std::string& message) {
+    
+    int c = 0;
+    std::cout << message;
 
-    int c = 0; 
-    std::string nof;
-
-    std::cout << "Choose archiver 0 - stat, 1 - dyn : ";
     std::cin >> c;
 
-    if(c == 1){
+    while (std::cin.fail()) {
+        
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-        DynArchiver darchiver;
-
-        std::cout << "If you want to archive - enter 1, else - 0 : ";
+        std::cout << "Incorrect input! Repeat" << std::endl;
+        std::cout << message;
         std::cin >> c;
+    }
 
-        if(c == 1){
+    return c;
+}
+
+bool ChoiceConsoleInput(const std::string& message, const std::string incorrect) {
+
+    int c = IntConsoleInput(message);
+
+    while((c != 1) && (c != 0)){
+
+        std::cout << std::endl << incorrect << std::endl;
+        c = IntConsoleInput(message);
+    }
+
+    return static_cast<bool>(c);
+}
+
+void ChoiceArchUnarch(Archiver& archiver) {
+
+    std::string nof = "";
+    std::string message_c = "If you want to archive - enter 1, unarchive - 0 : ";
+
+    std::string incorrect = "Choose 0 or 1!";
+
+    bool c = ChoiceConsoleInput(message_c, incorrect);
+
+    bool success = false;
+    bool exit = false;
+    bool no_except = true;
+
+    if (c) {
+
+        while (!success && !exit) {
 
             std::cout << "Enter name of file which you want to archive : ";
             std::cin >> nof;
-            std::cout << "\nArchiving...";
-            darchiver.arch(nof);
-            std::cout << std::endl << "Done!";
 
-        } else if(c == 0) {
+            try {
 
-            std::cout << "Enter name of file which you want to unarchive : ";
-            std::cin >> nof;
-            std::cout << "\nUnrchiving...";
-            darchiver.unarch(nof);
-            std::cout << std::endl << "Done!";
+                archiver.arch(nof);
+
+            } catch (Archiver::cant_open_file_error& cant_open) {
+
+                no_except = false;
+
+                std::cout << cant_open.what() << " : " << cant_open.get_nof() << std::endl;
+
+                std::string message_e = "Try again - 1, exit - 0\n";
+                exit = !ChoiceConsoleInput(message_e, incorrect);
+                
+            } catch (Archiver::write_in_exist_file_error& arch_file_exist) {
+                
+                no_except = false;
+
+                std::cout << arch_file_exist.what() << " : " << arch_file_exist.get_nof() << std::endl;
+                std::cout << "Delete it or move to another dir before archiving" << std::endl;
+            
+                exit = true;
+            }
+
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            if (no_except) {
+
+                success = true;
+                std::cout << "<< Archiving done! >>" << std::endl;
+            }
         }
 
     } else {
 
-        StatArchiver sarchiver;
+        std::string un_nof = "";
 
-        std::cout << "If you want to archive - enter 1, else - 0 : ";
-        std::cin >> c;
-
-        if(c == 1){
-
-            std::cout << "Enter name of file which you want to archive : ";
-            std::cin >> nof;
-            std::cout << "\nArchiving...";
-            sarchiver.arch(nof);
-            std::cout << std::endl << "Done!";
-
-        } else if(c == 0) {
+        while (!success && !exit) {
 
             std::cout << "Enter name of file which you want to unarchive : ";
             std::cin >> nof;
-            std::cout << "\nUnrchiving...";
-            sarchiver.unarch(nof);
-            std::cout << std::endl << "Done!";
+
+            std::string message_un = "Name of unarchived file 1 - custom, 0 - standart : ";
+
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            if (ChoiceConsoleInput(message_un, incorrect)) {
+
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                
+                std::cin >> un_nof;
+            }
+
+            try {
+
+                archiver.unarch(nof, un_nof);
+
+            } catch (Archiver::cant_open_file_error& cant_open) {
+
+                no_except = false;
+
+                std::cout << cant_open.what() << " : " << cant_open.get_nof() << std::endl;
+
+                std::string message_e = "Try again - 1, exit - 0\n";
+                exit = !ChoiceConsoleInput(message_e, incorrect);
+                
+            } catch (Archiver::write_in_exist_file_error& arch_file_exist) {
+                
+                no_except = false;
+
+                std::cout << arch_file_exist.what() << " : " << arch_file_exist.get_nof() << std::endl;
+                std::cout << "Delete it or move to another dir before unarchiving" << std::endl;
+            
+                exit = true;
+
+            } catch (Archiver::file_is_not_archive& file_not_arch) {
+
+                no_except = false;
+
+                std::cout << file_not_arch.what() << " : " << file_not_arch.get_nof() << std::endl;
+
+                std::string message_e = "Try again - 1, exit - 0\n";
+                exit = !ChoiceConsoleInput(message_e, incorrect);
+            }
+
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            if (no_except) {
+
+                success = true;
+                std::cout << "<< Unarchiving done! >>" << std::endl;
+            }
         }
+    }
+}
+
+int main(int argc, char * argv[]) {
+
+    std::cin.sync();
+
+    std::string message = "Choose archiver dyn - 1, stat - 0 : ";
+    std::string incorrect = "Choose 0 or 1!";
+
+    bool c = ChoiceConsoleInput(message, incorrect);
+
+    if (c) {
+
+        DynArchiver darch;
+        ChoiceArchUnarch(darch);
+
+    } else {
+
+        StatArchiver sarch;
+        ChoiceArchUnarch(sarch);
     }
 
     return 0;

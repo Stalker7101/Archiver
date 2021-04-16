@@ -7,6 +7,40 @@ StatArchiver::StatArchiver() : Archiver() {}
 
 std::string StatArchiver::arch(const std::string& nf_to_arch) const {
 
+    // open original file
+    std::ifstream original(nf_to_arch, std::ios::binary);
+
+    // check is it open
+    if (!original.is_open()) {
+
+        // if not throw exception
+        throw Archiver::cant_open_file_error(nf_to_arch);
+    }
+
+    // get necessary information about original file 
+    
+    // get size of file
+    original.seekg(0, std::ios::end);
+    std::size_t file_size = static_cast<std::size_t>(original.tellg());
+    original.seekg(0, std::ios::beg);
+
+    // set read block size
+    std::size_t block_size = 100;
+
+    // calculate number of iterations
+    std::size_t num_iters = file_size / block_size;
+
+    // calculate the rest that doesn't
+    // fill block_size completely
+    std::size_t sz_rest = file_size % block_size;
+
+    if(sz_rest){
+        // if there is rest of file that
+        // doesn't fill block size completely
+        
+        num_iters++;
+    }
+
     // initialize the coding
     // tree for a specific file
     StatTree tree(nf_to_arch, StatTree::Mode::Encrypt);
@@ -17,8 +51,17 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
 
     // defining name of file with archiving information
     std::string res_nf = nf_to_arch + ".sarch";
-
     
+    // check if file with name res_nf already exist
+    std::ifstream arch_in(res_nf, std::ios::binary);
+
+    if (arch_in.is_open()) {
+
+        // if exist close file and throw exception
+        arch_in.close();
+        throw Archiver::write_in_exist_file_error(res_nf);
+    }
+
     // open new archiving file
     std::ofstream archived(res_nf, std::ios::binary | std::ios::app);
 
@@ -62,33 +105,6 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
     // write tree in archived file
     std::vector<char> vec_tree = tree.get_tree_in_vec();
     archived.write(&vec_tree[0], vec_tree.size());
-
-    // open original file
-    std::ifstream original(nf_to_arch, std::ios::binary);
-
-    // get necessary information about original file 
-    
-    // get size of file
-    original.seekg(0, std::ios::end);
-    std::size_t file_size = static_cast<std::size_t>(original.tellg());
-    original.seekg(0, std::ios::beg);
-
-    // set read block size
-    std::size_t block_size = 100;
-
-    // calculate number of iterations
-    std::size_t num_iters = file_size / block_size;
-
-    // calculate the rest that doesn't
-    // fill block_size completely
-    std::size_t sz_rest = file_size % block_size;
-
-    if(sz_rest){
-        // if there is rest of file that
-        // doesn't fill block size completely
-        
-        num_iters++;
-    }
 
     // create read buffer
     std::vector<char> Read(block_size);
@@ -165,19 +181,45 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
     return res_nf;
 }
 
-std::string StatArchiver::unarch(const std::string& nf_to_unarch) const {
+std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::string& Res_nf) const {
 
+    // open file with archived information
+    std::ifstream archived(nf_to_unarch, std::ios::binary);
+
+    // check is it open
+    if (!archived.is_open()) {
+
+        // if not throw exception
+        throw Archiver::cant_open_file_error(nf_to_unarch);
+    }
+
+    // find begining of substr with archived file extention
+    std::size_t point = nf_to_unarch.rfind(".sarch");
+
+    // if there is no such substr
+    if (point == std::string::npos) {
+        
+        // throw exception
+        throw Archiver::file_is_not_archive(nf_to_unarch);
+    }
+    
     // initialize the coding
     // tree for a specific file
     // there we have already read tree
     StatTree tree(nf_to_unarch, StatTree::Mode::Decrypt);
 
-    // defining name of file with unarchived information
-    int point = nf_to_unarch.find(".sarch");
-    std::string res_nf =  nf_to_unarch.substr(0, point);
-    
-    // open file with archived information
-    std::ifstream archived(nf_to_unarch, std::ios::binary);
+    std::string res_nf = "";
+
+    if (Res_nf.size() != 0) {
+
+        res_nf = Res_nf;
+
+    } else {
+
+        // define unarchived file name as
+        // substr without archive extention
+        res_nf =  nf_to_unarch.substr(0, point);
+    }
     
     // initialize temp for reading first_spec_byte
     char temp = 0;
@@ -224,6 +266,16 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch) const {
 
     // create read buffer
     std::vector<char> Read(block_size);
+
+    // check if file with name res_nf already exist
+    std::ifstream unarch_in(res_nf, std::ios::binary);
+
+    if (unarch_in.is_open()) {
+
+        // if exist close file and throw exception
+        unarch_in.close();
+        throw Archiver::write_in_exist_file_error(res_nf);
+    }
 
     // open new file with unarchived information
     std::ofstream unarchived(res_nf, std::ios::binary | std::ios::app);

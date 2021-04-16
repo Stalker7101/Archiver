@@ -6,7 +6,7 @@
 DynNode::DynNode(unsigned short Byte, const std::size_t& Freq,
                  int Left, int Right, int Prev) :
 
-Node(Byte, Freq), left(Left), right(Right), prev(Prev) {}
+    Node(Byte, Freq), left(Left), right(Right), prev(Prev) {}
 
 int DynNode::get_left() const {
 
@@ -40,7 +40,7 @@ void DynNode::reset_prev(int Prev) {
 
 bool DynNode::is_leaf() const {
 
-    return ((left == NOTHING) && (right == NOTHING));
+    return ((left == NOTHING) && (right == NOTHING) && (byte != NO_INF_SIGN));
 }
 
 DynNode::~DynNode() {}
