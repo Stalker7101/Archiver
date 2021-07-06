@@ -46,6 +46,7 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
 
     // initialize coding table for encrypting
     // with help of information from tree
+    // DynTable refers to DynTree while encoding
     DynTable table(tree);
 
     // defining name of archived file
@@ -75,6 +76,7 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
 
     // the process of archiving
     for(unsigned int i = 0; i < num_iters; i++){
+
         if((i == num_iters - 1) && rest_file){
             // if it is the last iteration and there is the
             // rest that doesn't fill the block size completely
@@ -103,7 +105,7 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
     // get rest of encryption
     std::pair<char, unsigned int> rest = table.get_rest_of_encrypt();
 
-    if(rest.second){
+    if (rest.second) {
         // if there is a rest of encryption
 
         // open archived file again with another flags
@@ -240,7 +242,8 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
             // special decription instead
             num_iters--;
 
-            // change size of rest to size of read block
+            // change size of rest from zero
+            // to size of read block
             sz_rest = block_size;
         }
 
@@ -332,6 +335,8 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
         // call function to decrypt last byte even if
         // there is no such byte in order to write
         // last seen but not written byte
+        
+        // it is due to realzation of decrypting
 
         // initialization of last encrypted bits
         std::pair<char, unsigned int> last_encr(0, 0);

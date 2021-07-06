@@ -28,7 +28,7 @@ int IntConsoleInput(const std::string& message) {
     return c;
 }
 
-bool ChoiceConsoleInput(const std::string& message, const std::string incorrect) {
+bool ChoiceConsoleInput(const std::string& message, const std::string& incorrect) {
 
     int c = IntConsoleInput(message);
 

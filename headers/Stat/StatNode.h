@@ -40,8 +40,8 @@ class StatNode final : public Node
         StatNode(StatNode&& stn);
 
         // get children
-        std::shared_ptr<const StatNode> get_left() const;
-        std::shared_ptr<const StatNode> get_right() const;
+        std::shared_ptr<const StatNode> get_left() const; /// was changed
+        std::shared_ptr<const StatNode> get_right() const; /// was changed
 
         // reset children
         void reset_left(const std::shared_ptr<StatNode>& Left);

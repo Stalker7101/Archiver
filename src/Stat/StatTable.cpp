@@ -110,13 +110,16 @@ const Code& StatTable::operator [] (unsigned int i) const {
 void StatTable::rec_make_table(const std::shared_ptr<const StatNode>& stn,
                                std::size_t code, unsigned int length) {
 
-    if(stn->is_leaf()){
+    if (stn->is_leaf()) {
+
         // adding information about leaf in StatTable
         unsigned int current_byte = static_cast<unsigned int>(stn->get_byte());
         table[current_byte].reset_byte(stn->get_byte());
         table[current_byte].reset_code(code);
         table[current_byte].reset_length(length);
+
     } else {
+
         rec_make_table(stn->get_left(), code << 1, length + 1);
         rec_make_table(stn->get_right(), (code << 1) | 1, length + 1);
     }
