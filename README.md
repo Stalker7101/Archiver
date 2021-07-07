@@ -38,9 +38,9 @@ Follow intructions in console menu
 - archiver with Haffman static algorithm
 - archiver with Vitter dynamic algorithm
 - console menu
+- colsole interface like in Linux utilities
 
 ## In development
 - special labels which will allow to identify archive and it's type
-- colsole interface like in Linux utilities
 - fixes of inner classes (StatTree, DynTree ...)
 - library of encryption algorithms
