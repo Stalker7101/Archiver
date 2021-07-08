@@ -23,7 +23,10 @@ void Table::write_code(const Code& cd, std::vector<char>& encrypted) {
     const std::size_t& code = cd.get_code();
     unsigned int length = cd.get_length();
 
-    for(int p = length - 1; p >= 0; p--){ 
+    // if there only one byte in coding tree (possiple for StatTree)
+    if (!length && (cd.get_byte() != 0x200)) { ++length; }
+
+    for(int p = length - 1; p >= 0; --p){ 
         // first  - describes the found code
         // second - describes the length of found code
             

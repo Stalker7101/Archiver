@@ -125,14 +125,13 @@ const Code& DynTable::operator [] (unsigned int i) const {
     unsigned int length = 0;
 
     // generate code for byte i
-    while(prev_node != -1){ //dyn_tree->move_prev()){
-
+    while(prev_node != -1){
         // if curr node is the right child
         if(dyn_tree->tree[prev_node].get_right() == curr_pos){
             code |= (1 << length);
         }
         // if it is left child - just nothing to do
-        length++;
+        ++length;
         curr_pos = prev_node;
         prev_node = dyn_tree->tree[curr_pos].get_prev();
     }

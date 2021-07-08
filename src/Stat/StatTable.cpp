@@ -35,7 +35,7 @@ std::vector<char> StatTable::encrypt(const std::vector<char>& bytes_to_encrypt) 
     // initialization of return vector with encrypted information
     std::vector<char> encrypted;
     
-    for(unsigned int i = 0; (i < bytes_to_encrypt.size()); i++){
+    for(unsigned int i = 0; i < bytes_to_encrypt.size(); ++i){
         
         // cast current byte in bytes_to_encrypt to unsigned char
         // from char in order to avoid errors with casting farther 

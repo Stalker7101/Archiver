@@ -24,11 +24,24 @@ _Configuration Properties --> C/C++ --> Code Generation, change the
 
 ## How to use
 When file is arcvive it has addition extention .darch or .sarch
+
 When file is unarchiving it just delete addition extention from name of archive
 
 Linux: run program - _./archiver_ from build directory
+(You can add binary to a /bin dir and then you can call archiver from any dir)
+
 Windows: run _archiver.exe_
-Follow intructions in console menu
+
+You can pass arguments to programm:
+
+- -h -- for help
+- [without arguments] -- console menu, follow instructions                                                                                      
+- -s -a [name_of_file] -- make archive with static method
+- -s -u [name_of_stat_archive] -- unarchive static archive
+- -d -a [name_of_file] -- make archive with dynamic method
+- -d -u [name_of_dyn_archive] -- unarchive dynamic archive
+
+In case you did not pass arguments, follow intructions in console menu:
 
 1. choose type of archiver 1 - dynamic (Vitter), 0 - static (Haffman)
 2. choose 1 - archive or 0 - unarchive file

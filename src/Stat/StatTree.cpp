@@ -454,10 +454,10 @@ std::vector<char> StatTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
     // initialization of return vector with deciphered information
     std::vector<char> deciphered;
 
-    for (unsigned int i = 0; (i < bytes_to_decrypt.size()); i++) {
+    for (unsigned int i = 0; i < bytes_to_decrypt.size(); ++i) {
 
         // cycle for passing the byte with encrypted information
-        for (unsigned int j = 0; j < 8; j++) {
+        for (unsigned int j = 0; j < 8; ++j) {
 
             // at begining of every iteration
             // we are not in leaf
@@ -469,7 +469,7 @@ std::vector<char> StatTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
             // update length of route
             route_curr_prot.second++;
 
-            if (bytes_to_decrypt[i] & (1 << (7 - j))) {
+            if ((bytes_to_decrypt[i] & (1 << (7 - j))) && !curr_node_prot->is_leaf()) {
 
                 // updating current node and route
                 // in case next bit is 1 and then
@@ -477,7 +477,7 @@ std::vector<char> StatTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
                 curr_node_prot = std::move(curr_node_prot->get_right());
                 route_curr_prot.first |= 1;
 
-            } else {
+            } else if (!curr_node_prot->is_leaf()) {
 
                 // updating route and current node
                 // in case next bit is 0 and then
@@ -534,7 +534,7 @@ std::vector<char> StatTree::decrypt_bits(const std::pair<char, unsigned int>& bi
         // update length of route
         route_curr_prot.second++;
 
-        if (bits.first & (1 << (7 - i))) {
+        if ((bits.first & (1 << (7 - i))) && !curr_node_prot->is_leaf()) {
 
             // updating current node and route
             // in case next bit is 1 and then
@@ -542,7 +542,7 @@ std::vector<char> StatTree::decrypt_bits(const std::pair<char, unsigned int>& bi
             curr_node_prot = std::move(curr_node_prot->get_right());
             route_curr_prot.first |= 1;
 
-        } else {
+        } else if (!curr_node_prot->is_leaf()) {
 
             // updating route and current node
             // in case next bit is 0 and then
@@ -796,9 +796,9 @@ bool StatTree::read_tree_vec(const std::vector<char>& tree,
 }
 
 bool StatTree::make_tree_file(const std::string& nof,
-                    std::priority_queue<std::shared_ptr<StatNode>,
-                    std::vector<std::shared_ptr<StatNode>>,
-                    StatNode::ptr_compare>& StatNodes) {
+                              std::priority_queue<std::shared_ptr<StatNode>,
+                              std::vector<std::shared_ptr<StatNode>>,
+                              StatNode::ptr_compare>& StatNodes) {
 
     // init max freq of byte in zero
     std::size_t max_freq = 0;

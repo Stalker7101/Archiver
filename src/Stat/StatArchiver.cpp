@@ -81,6 +81,7 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
     //  significant bits in  of max frequency  different  bytes in
     //  rest byte with enc-      in bytes              tree
     //  rypted information
+    //
     // write information about length
     // of each frequency in bytes
     

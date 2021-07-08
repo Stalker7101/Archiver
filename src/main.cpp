@@ -225,7 +225,7 @@ void InteractArchiver(Archiver& archiver, const std::vector<std::string>& args) 
 
     } else {
 
-       std::cout << "Incorrect argument! Type -h for help";
+       std::cout << "Incorrect argument! Type -h for help" << std::endl;
     }
 }
 
@@ -243,13 +243,14 @@ void LinuxStyleMenu(const std::vector<std::string>& args) {
 
     } else {
 
-        std::cout << "Incorrect argument! Type -h for help";
+        std::cout << "Incorrect argument! Type -h for help" << std::endl;
     }
 }
 
 void Help() {
 
     std::cout << "-h -- for help" << std::endl;
+    std::cout << "[without arguments] -- console menu" << std::endl;
     std::cout << "-s -a [name_of_file] -- make archive with static method" << std::endl;
     std::cout << "-s -u [name_of_stat_archive] -- unarchive static archive" << std::endl;
     std::cout << "-d -a [name_of_file] -- make archive with dynamic method" << std::endl;
@@ -262,7 +263,7 @@ int main(int argc, char * argv[]) {
 
     if ((argc > needLStyleNumOfArgs) || (argc == 3)) {
 
-        std::cout << "Incorrect number of arguments! Type -h for help";
+        std::cout << "Incorrect number of arguments! Type -h for help" << std::endl;
         return 0;
     }
 
@@ -285,7 +286,7 @@ int main(int argc, char * argv[]) {
 
         } else {
 
-            std::cout << "Incorrect argument! Type -h for help";
+            std::cout << "Incorrect argument! Type -h for help" << std::endl;
         }
 
     } else {

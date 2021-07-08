@@ -98,17 +98,17 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
     // initialization of return vector with deciphered information
     std::vector<char> deciphered;
 
-    for(unsigned int i = 0; i < bytes_to_decrypt.size(); i++){
+    for (unsigned int i = 0; i < bytes_to_decrypt.size(); ++i) {
 
         // cycle for passing the byte with encrypted information
-        for(unsigned int j = 0; j < 8; j++){
+        for (unsigned int j = 0; j < 8; ++j) {
 
-            if(tree[curr_node_prot].is_leaf()){
+            if (tree[curr_node_prot].is_leaf()) {
                 // if some leaf of the tree is reached
                 
                 unsigned short ush_byte = tree[curr_node_prot].get_byte();
 
-                if(ush_byte == static_cast<unsigned short>(NYT_NODE_SIGN)){
+                if (ush_byte == static_cast<unsigned short>(NYT_NODE_SIGN)) {
 
                     // if leaf with nyt sign is reached
                     // it means that the next block of information that we will
@@ -131,9 +131,9 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
                     first_seen_byte.first |= 
                         ((current_bit >> (7 - j)) << (7 - first_seen_byte.second));
 
-                    first_seen_byte.second++;
+                    ++first_seen_byte.second;
 
-                    if(first_seen_byte.second == 8){
+                    if (first_seen_byte.second == 8) {
 
                         // if the block of information
                         // already contains 8 bits
@@ -175,7 +175,7 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
                     // reset protected current node
                     curr_node_prot = 0;
 
-                    if(bytes_to_decrypt[i] & (1 << (7 - j))){
+                    if (bytes_to_decrypt[i] & (1 << (7 - j))) {
 
                         // protected current node in case next
                         // bit is 1 and then next node is right child
@@ -191,7 +191,7 @@ std::vector<char> DynTree::decrypt(const std::vector<char>& bytes_to_decrypt) {
 
             } else {
 
-                if(bytes_to_decrypt[i] & (1 << (7 - j))){
+                if (bytes_to_decrypt[i] & (1 << (7 - j))) {
 
                     // protected current node in case next
                     // bit is 1 and then next node is right child
@@ -220,15 +220,15 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
     std::vector<char> deciphered;
 
     // cycle for passing the byte with encrypted information
-    for(unsigned int i = 0; i < bits.second; i++){
+    for (unsigned int i = 0; i < bits.second; ++i) {
 
-        if(tree[curr_node_prot].is_leaf()){
+        if (tree[curr_node_prot].is_leaf()) {
 
             // if some leaf of the tree is reached
 
             unsigned short ush_byte = tree[curr_node_prot].get_byte();
 
-            if(ush_byte == static_cast<unsigned short>(NYT_NODE_SIGN)){
+            if (ush_byte == static_cast<unsigned short>(NYT_NODE_SIGN)) {
 
                 // if leaf with nyt sign is reached
                 // it means that the block of information that we will
@@ -250,9 +250,9 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
                 first_seen_byte.first |= 
                     ((current_bit >> (7 - i)) << (7 - first_seen_byte.second));
 
-                first_seen_byte.second++;
+                ++first_seen_byte.second;
 
-                if(first_seen_byte.second == 8){
+                if (first_seen_byte.second == 8) {
 
                     // if the block of information
                     // already contains 8 bits
@@ -293,7 +293,7 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
                 // reset protected current node
                 curr_node_prot = 0;
 
-                if(bits.first & (1 << (7 - i))){
+                if (bits.first & (1 << (7 - i))) {
 
                     // protected current node in case next
                     // bit is 1 and then next node is right child
@@ -309,7 +309,7 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
 
         } else {
 
-            if(bits.first & (1 << (7 - i))){
+            if (bits.first & (1 << (7 - i))) {
 
                 // protected current node in case next
                 // bit is 1 and then next node is right child
@@ -324,7 +324,7 @@ std::vector<char> DynTree::decrypt_bits(const std::pair<char, unsigned int>& bit
         }
     }
 
-    if(tree[curr_node_prot].is_leaf()){
+    if (tree[curr_node_prot].is_leaf()) {
 
         // if any leaf with simple byte is reached at the end of decryption
         
