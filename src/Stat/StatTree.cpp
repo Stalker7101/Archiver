@@ -7,7 +7,7 @@ StatTree::StatTree(const std::string& Name_of_File, const StatTree::Mode& md) :
     interacting_nf(Name_of_File), Tree(), root(), freq_length(0), route_curr_pub(),
     mode(md), curr_node_prot(nullptr), curr_node_pub(nullptr), route_curr_prot(),
     num_diff_bytes(0), Byte_Freq(sz_byte_fq_tab, 0), bad_state(false),
-    success_file_open(false), bad_tree(false) {
+    success_file_open(false), inf_is_empty(false), bad_tree(false) {
 
     // initialize priority queue in order to save nodes
     std::priority_queue<std::shared_ptr<StatNode>,
@@ -44,70 +44,17 @@ StatTree::StatTree(const std::string& Name_of_File, const StatTree::Mode& md) :
 }
 
 StatTree::StatTree(const std::vector<char>& bytes) :
-    Tree(), Byte_Freq(sz_byte_fq_tab, 0), root(nullptr),
-    route_curr_prot(), route_curr_pub(), freq_length(0), mode(StatTree::Mode::Encrypt),
-    num_diff_bytes(0), curr_node_pub(nullptr), curr_node_prot(nullptr), bad_state(false),
-    success_file_open(false), bad_tree(false) {
+    Tree(), Byte_Freq(sz_byte_fq_tab, 0), root(nullptr), route_curr_prot(),
+    route_curr_pub(), freq_length(0), mode(StatTree::Mode::Encrypt),
+    num_diff_bytes(0), curr_node_pub(nullptr), curr_node_prot(nullptr),
+    bad_state(false), success_file_open(false), inf_is_empty(false), bad_tree(false) {
 
     // initialize priority queue in order to save nodes
     std::priority_queue<std::shared_ptr<StatNode>,
                         std::vector<std::shared_ptr<StatNode>>,
                         StatNode::ptr_compare> StatNodes;
 
-    // init freq table in zeros
-    //for (unsigned int i = 0; i < sz_byte_fq_tab; i++) {
-    //    Byte_Freq[i] = 0;
-    //}
-
-    std::size_t max_freq = 0;
-
-    for (unsigned int i = 0; i < bytes.size(); i++) {
-
-        // casts of byte
-        unsigned char uch_byte = static_cast<unsigned char>(bytes[i]);
-        unsigned int uint_byte = static_cast<unsigned int>(uch_byte);
-
-        // count num of different bytes
-        if (!Byte_Freq[uint_byte]) {
-
-            num_diff_bytes++;
-        }
-
-        // increment freq of current byte
-        Byte_Freq[uint_byte]++;
-
-        // find byte with max freq
-        if (Byte_Freq[uint_byte] > max_freq) {
-
-            max_freq = Byte_Freq[uint_byte];
-        }
-    }
-
-    // make nodes with bytes and frequences
-    for (unsigned int i = 0; i < sz_byte_fq_tab; i++) {
-
-        if (Byte_Freq[i]) {
-
-            StatNodes.emplace(new StatNode(static_cast<unsigned short>(i),
-                                           Byte_Freq[i]));
-        }
-    }
-
-    // defining the length of max_freq in bytes
-    // (in order to choose number of bytes that
-    // is necessary for saving frequenses)
-    
-    unsigned char mask = 255;
-    for (unsigned int i = 0; i < 8; i++) {
-
-        if (max_freq & (mask << (8 * i))) {
-
-            freq_length = i + 1;
-        }
-    }
-
-    // make tree from nodes with Haffman algorithm
-    make_tree(StatNodes);
+    make_tree_vec(bytes, StatNodes);
 }
 
 StatTree::StatTree(const std::vector<char>& tree_in_vec, unsigned int Num_diff_bytes,
@@ -116,12 +63,19 @@ StatTree::StatTree(const std::vector<char>& tree_in_vec, unsigned int Num_diff_b
     Tree(), Byte_Freq(sz_byte_fq_tab, 0), root(nullptr), route_curr_prot(),
     route_curr_pub(), curr_node_pub(nullptr), curr_node_prot(nullptr), bad_tree(false),
     freq_length(Freq_length), num_diff_bytes(Num_diff_bytes), bad_state(false),
-    success_file_open(false), mode(StatTree::Mode::Decrypt) {
+    success_file_open(false), inf_is_empty(false), mode(StatTree::Mode::Decrypt) {
 
     // initialize priority queue in order to save nodes
     std::priority_queue<std::shared_ptr<StatNode>,
                         std::vector<std::shared_ptr<StatNode>>,
                         StatNode::ptr_compare> StatNodes;
+
+    if (!tree_in_vec.size()) {
+
+        inf_is_empty = true;
+        bad_tree = true;
+        bad_state = true;
+    }
 
     // read tree from vector with bytes
     read_tree_vec(tree_in_vec, StatNodes);
@@ -181,21 +135,21 @@ std::vector<char> StatTree::get_tree_in_vec() const {
     unsigned char mask = 255;
 
     // write blocks with bytes and freqs in vector
-    for (unsigned int i = 0, p = 0; i < 256; i++) {
+    for (unsigned int i = 0, p = 0; i < 256; ++i) {
         
         // p iterates in buffer of chars
         // i iterates in bytes
         if (Byte_Freq[i]) {
 
             ret[p] = static_cast<char>(i);
-            p++;
+            ++p;
 
             for (int j = freq_length - 1; j >= 0; --j) {
 
                 // j - number of byte in current freq
                 
                 ret[p] = static_cast<char>( (Byte_Freq[i] >> (j * 8)) & mask ); 
-                p++;
+                ++p;
             }
         }
     }
@@ -207,23 +161,25 @@ StatTree::StatTree(const StatTree& str) : // copy semantics
     Tree(str), root(nullptr), curr_node_prot(nullptr), bad_tree(str.bad_tree), 
     curr_node_pub(nullptr), freq_length(str.freq_length), bad_state(str.bad_state),
     route_curr_prot(str.route_curr_prot), route_curr_pub(str.route_curr_pub),
-    success_file_open(str.success_file_open), Byte_Freq(str.Byte_Freq) {
+    success_file_open(str.success_file_open), Byte_Freq(str.Byte_Freq),
+    inf_is_empty(str.inf_is_empty) {
     
     do_copy(str);
 }
 
 StatTree::StatTree(StatTree&& str) : // move semantics
     Tree(std::move(str)), root(std::move(str.root)),
-    freq_length(str.freq_length), bad_state(str.bad_state),
     curr_node_prot(std::move(str.curr_node_prot)),
     curr_node_pub(std::move(str.curr_node_pub)),
     route_curr_prot(std::move(str.route_curr_prot)),
     route_curr_pub(std::move(str.route_curr_pub)),
     Byte_Freq(std::move(str.Byte_Freq)),
+    freq_length(str.freq_length), bad_state(str.bad_state),
     success_file_open(str.success_file_open),
-    bad_tree(str.bad_tree) {
+    bad_tree(str.bad_tree), inf_is_empty(str.inf_is_empty) {
 
     str.freq_length = 0;
+    str.inf_is_empty = false;
     str.bad_tree = false;
     str.bad_state = false;
     str.success_file_open = false;
@@ -239,7 +195,21 @@ bool StatTree::read_trv(const std::vector<char>& tree, int flength, int ndif_b,
     clear_all_data();
     mode = md;
 
-    if (!tree.size() || (flength <= 0) || (ndif_b <= 0)) {
+    if (!tree.size()) {
+
+        inf_is_empty = true;
+        bad_tree = true;
+        bad_state = true;
+        return false;
+    }
+
+    // set length of block with information
+    // about byte and it's frequency
+    unsigned int length_of_block = flength + 1;
+
+    // check if size of tree vec is ok
+    if ((flength <= 0) || (ndif_b <= 0) ||
+        (tree.size() != (length_of_block * ndif_b))) {
 
         bad_state = true;
         bad_tree = true;
@@ -296,7 +266,7 @@ bool StatTree::make_trf(const std::string& nof) {
                         std::vector<std::shared_ptr<StatNode>>,
                         StatNode::ptr_compare> StatNodes;
 
-    if(make_tree_file(nof, StatNodes)) {
+    if (make_tree_file(nof, StatNodes)) {
         
         curr_node_prot = root;
         curr_node_pub = root;
@@ -308,6 +278,22 @@ bool StatTree::make_trf(const std::string& nof) {
     }
 }
 
+bool StatTree::make_trv(const std::vector<char>& bytes) {
+
+    clear_all_data();
+    mode = StatTree::Mode::Encrypt;
+
+    std::priority_queue<std::shared_ptr<StatNode>,
+                        std::vector<std::shared_ptr<StatNode>>,
+                        StatNode::ptr_compare> StatNodes;
+
+    if (!make_tree_vec(bytes, StatNodes)) {
+
+        return false;
+    }
+
+    return true;
+}
 
 const std::shared_ptr<const StatNode>& StatTree::get_curr() const {
 
@@ -406,6 +392,7 @@ StatTree& StatTree::operator = (const StatTree& str) {
         route_curr_prot = str.route_curr_prot;
         route_curr_pub = str.route_curr_pub;
         success_file_open = str.success_file_open;
+        inf_is_empty = str.inf_is_empty;
         Byte_Freq = str.Byte_Freq;
 
         // do part of copying that needs iterating
@@ -424,20 +411,22 @@ StatTree& StatTree::operator = (StatTree&& str) {
     } else {
 
         root = std::move(str.root);
-        freq_length = str.freq_length;
-        bad_state = str.bad_state;
         curr_node_prot = std::move(str.curr_node_prot);
         curr_node_pub = std::move(str.curr_node_pub);
         route_curr_prot = std::move(str.route_curr_prot);
         route_curr_pub = std::move(str.route_curr_pub);
         Byte_Freq = std::move(str.Byte_Freq);
+        freq_length = str.freq_length;
         success_file_open = str.success_file_open;
+        bad_state = str.bad_state;
         bad_tree = str.bad_tree;
+        inf_is_empty = str.inf_is_empty;
 
         str.freq_length = 0;
         str.bad_tree = false;
         str.bad_state = false;
         str.success_file_open = false;
+        str.inf_is_empty = false;
 
         return * this;
     }
@@ -522,7 +511,7 @@ std::vector<char> StatTree::decrypt_bits(const std::pair<char, unsigned int>& bi
     // initialization of return vector with deciphered information
     std::vector<char> deciphered;
 
-    for (unsigned int i = 0; i < bits.second; i++) {
+    for (unsigned int i = 0; i < bits.second; ++i) {
         
         // at the begining of every iteration
         // we are not in leaf
@@ -591,14 +580,13 @@ void StatTree::do_copy(const StatTree& str) {
         // copy of nodes
         for (unsigned int i = 0; i < sz_byte_fq_tab; ++i) {
 
-            if(Byte_Freq[i]){
+            if (Byte_Freq[i]) {
 
                 // make node with this byte and it's frequency
                 StatNodes.emplace(new StatNode(static_cast<unsigned short>(i),
                                                Byte_Freq[i]));
             }
         }
-
 
         // making full coding tree for new copy-object
         make_tree(StatNodes);
@@ -611,7 +599,6 @@ void StatTree::do_copy(const StatTree& str) {
         copy_curr_node(str.route_curr_pub, curr_node_pub);
         route_curr_pub = str.route_curr_pub;
     }
-
 }
 
 void StatTree::copy_curr_node(const std::pair<std::size_t, unsigned int>& route,
@@ -641,8 +628,8 @@ void StatTree::copy_curr_node(const std::pair<std::size_t, unsigned int>& route,
 }
 
 bool StatTree::read_tree_file(std::priority_queue<std::shared_ptr<StatNode>,
-                                                std::vector<std::shared_ptr<StatNode>>,
-                                                StatNode::ptr_compare>& StatNodes) {
+                                                  std::vector<std::shared_ptr<StatNode>>,
+                                                  StatNode::ptr_compare>& StatNodes) {
 
     // open file with tree
     std::ifstream interact_file(interacting_nf, std::ios::binary);
@@ -661,6 +648,23 @@ bool StatTree::read_tree_file(std::priority_queue<std::shared_ptr<StatNode>,
 
         // else set file is open
         success_file_open = true;
+    }
+
+    // move to ending of file
+    interact_file.seekg(0, std::ios::end);
+
+    // get size of file
+    std::size_t file_size = static_cast<std::size_t>(interact_file.tellg());
+
+    // move to begining of file
+    interact_file.seekg(0, std::ios::beg);
+
+    // return if file is empty
+    if (!file_size) {
+
+        inf_is_empty = true;
+        bad_state = true;
+        return false;
     }
 
     // buffer variable
@@ -724,16 +728,23 @@ bool StatTree::read_tree_file(std::priority_queue<std::shared_ptr<StatNode>,
 
 bool StatTree::read_tree_vec(const std::vector<char>& tree,
                              std::priority_queue<std::shared_ptr<StatNode>,
-                                                std::vector<std::shared_ptr<StatNode>>,
-                                                StatNode::ptr_compare>& StatNodes) {
-
+                                                 std::vector<std::shared_ptr<StatNode>>,
+                                                 StatNode::ptr_compare>& StatNodes) {
 
     // set length of block with information
     // about byte and it's frequency
     unsigned int length_of_block = freq_length + 1;
+    
+    if (!tree.size()) {
+
+        inf_is_empty = true;
+        bad_tree = true;
+        bad_state = true;
+    }
 
     // check if size of tree vec is ok
-    if ((freq_length <= 0) || (tree.size() != (length_of_block * num_diff_bytes))) {
+    if ((freq_length <= 0) || (num_diff_bytes <= 0) ||
+        (tree.size() != (length_of_block * num_diff_bytes))) {
 
         // if not - return and set flags
         bad_tree = true;
@@ -742,7 +753,7 @@ bool StatTree::read_tree_vec(const std::vector<char>& tree,
         return false;
     }
 
-    for (unsigned int i = 0; i < num_diff_bytes; i++) {
+    for (unsigned int i = 0; i < num_diff_bytes; ++i) {
 
         // i iterates to number of diff bytes in tree
         // and in number of block of information
@@ -753,7 +764,7 @@ bool StatTree::read_tree_vec(const std::vector<char>& tree,
         // buffer variable for recording freq of byte
         std::size_t freq = 0;
 
-        for (unsigned int j = 0; j < length_of_block; j++) {
+        for (unsigned int j = 0; j < length_of_block; ++j) {
 
             // now we are reading i-th block
 
@@ -823,13 +834,27 @@ bool StatTree::make_tree_file(const std::string& nof,
         success_file_open = true;
     }
 
-    interact_file.seekg(0, std::ios::end);
-
     // set read block size
     std::size_t block_size = 100;
 
     // collect information about file
+    
+    // move to ending of file
+    interact_file.seekg(0, std::ios::end);
+
+    // get size of file
     std::size_t file_size = static_cast<std::size_t>(interact_file.tellg());
+
+    // move to begining of file
+    interact_file.seekg(0, std::ios::beg);
+
+    // return if file is empty
+    if (!file_size) {
+
+        inf_is_empty = true;
+        bad_state = true;
+        return false;
+    }
 
     // num of iterations needed in order to chek file
     std::size_t num_iters = file_size / block_size;
@@ -842,9 +867,6 @@ bool StatTree::make_tree_file(const std::string& nof,
 
         num_iters++;
     }
-
-    // move to begining of file
-    interact_file.seekg(0, std::ios::beg);
 
     // init buffer
     std::vector<char> Read(block_size);
@@ -870,7 +892,7 @@ bool StatTree::make_tree_file(const std::string& nof,
             // count num of different bytes
             if (!Byte_Freq[uint_byte]) {
 
-                num_diff_bytes++;
+                ++num_diff_bytes;
             }
 
             // increment freq of current byte
@@ -902,7 +924,7 @@ bool StatTree::make_tree_file(const std::string& nof,
     // is necessary for saving frequenses)
     
     unsigned char mask = 255;
-    for (unsigned int i = 0; i < 8; i++) {
+    for (unsigned int i = 0; i < 8; ++i) {
 
         if ((max_freq >> (8 * i)) & mask) {
             
@@ -913,6 +935,70 @@ bool StatTree::make_tree_file(const std::string& nof,
     // make tree from nodes with Hafman algorithm
     make_tree(StatNodes);
 
+    return true;
+}
+
+bool StatTree::make_tree_vec(const std::vector<char>& bytes,
+                             std::priority_queue<std::shared_ptr<StatNode>,
+                                                std::vector<std::shared_ptr<StatNode>>,
+                                                StatNode::ptr_compare>& StatNodes) {
+
+    if (!bytes.size()) {
+
+        inf_is_empty = true;
+        bad_state = true;
+        return false;
+    }
+
+    std::size_t max_freq = 0;
+
+    for (unsigned int i = 0; i < bytes.size(); ++i) {
+
+        // casts of byte
+        unsigned char uch_byte = static_cast<unsigned char>(bytes[i]);
+        unsigned int uint_byte = static_cast<unsigned int>(uch_byte);
+
+        // count num of different bytes
+        if (!Byte_Freq[uint_byte]) {
+
+            ++num_diff_bytes;
+        }
+
+        // increment freq of current byte
+        ++Byte_Freq[uint_byte];
+
+        // find byte with max freq
+        if (Byte_Freq[uint_byte] > max_freq) {
+
+            max_freq = Byte_Freq[uint_byte];
+        }
+    }
+
+    // make nodes with bytes and frequences
+    for (unsigned int i = 0; i < sz_byte_fq_tab; ++i) {
+
+        if (Byte_Freq[i]) {
+
+            StatNodes.emplace(new StatNode(static_cast<unsigned short>(i),
+                                           Byte_Freq[i]));
+        }
+    }
+
+    // defining the length of max_freq in bytes
+    // (in order to choose number of bytes that
+    // is necessary for saving frequenses)
+    
+    unsigned char mask = 255;
+    for (unsigned int i = 0; i < 8; ++i) {
+
+        if (max_freq & (mask << (8 * i))) {
+
+            freq_length = i + 1;
+        }
+    }
+
+    // make tree from nodes with Haffman algorithm
+    make_tree(StatNodes);
     return true;
 }
 
@@ -954,6 +1040,7 @@ void StatTree::clear_all_data() {
     num_diff_bytes = 0;
     bad_state = false;
     success_file_open = false;
+    inf_is_empty = false;
     bad_tree = false;
     interacting_nf = "";
     curr_node_prot = nullptr;

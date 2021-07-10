@@ -9,7 +9,7 @@ DynTree::DynTree() :
     tree(new DynNode [MAX_NUMBER_OF_NODES]) {
     
     // initialization
-    for(int i = 0; i < 256; i++)
+    for (int i = 0; i < 256; ++i)
         leafs[i] = NOTHING;
 
     // set nyt node

@@ -39,10 +39,11 @@ public:
 
 
     // change tree (may be helpful if there is bad_state = true)
-    bool make_trf(const std::string& nof);                           // make tree
-    bool read_trf(const std::string& nof, const StatTree::Mode& md); // from file
+    bool make_trf(const std::string& nof);                           // make tr from file
+    bool read_trf(const std::string& nof, const StatTree::Mode& md); // read tr from file
+    bool make_trv(const std::vector<char>& bytes);                   // make tr from vect
     bool read_trv(const std::vector<char>& tree, int flength,
-                  int ndif_b, const StatTree::Mode& md);             // from vector
+                  int ndif_b, const StatTree::Mode& md);             // read tr from vect
     
     // get properties
     const std::string&                     get_interacting_nf() const;
@@ -60,6 +61,7 @@ public:
     std::size_t     get_curr_freq() const override;
 
     // state flags of object
+    bool is_inf_empty()         const;
     bool is_bad_state()         const;
     bool is_success_file_open() const;
     bool is_bad_tree()          const;
@@ -94,6 +96,11 @@ protected:
 
     bool make_tree_file(const std::string& nof,
                         std::priority_queue<std::shared_ptr<StatNode>,
+                                            std::vector<std::shared_ptr<StatNode>>,
+                                            StatNode::ptr_compare>& StatNodes);
+
+    bool make_tree_vec(const std::vector<char>& bytes,
+                       std::priority_queue<std::shared_ptr<StatNode>,
                                            std::vector<std::shared_ptr<StatNode>>,
                                            StatNode::ptr_compare>& StatNodes);
 
@@ -118,5 +125,6 @@ protected:
     unsigned int                         num_diff_bytes;
     bool                                 bad_state;
     bool                                 success_file_open;
+    bool                                 inf_is_empty;
     bool                                 bad_tree;
 };

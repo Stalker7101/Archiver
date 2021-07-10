@@ -23,6 +23,7 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
     original.seekg(0, std::ios::end);
     std::size_t file_size = static_cast<std::size_t>(original.tellg());
     original.seekg(0, std::ios::beg);
+    original.close();
 
     // set read block size
     std::size_t block_size = 100;
@@ -34,20 +35,12 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
     // fill block_size completely
     std::size_t sz_rest = file_size % block_size;
 
-    if(sz_rest){
+    if (sz_rest) {
         // if there is rest of file that
         // doesn't fill block size completely
         
-        num_iters++;
+        ++num_iters;
     }
-
-    // initialize the coding
-    // tree for a specific file
-    StatTree tree(nf_to_arch, StatTree::Mode::Encrypt);
-
-    // initialize coding table using
-    // information from coding tree
-    StatTable table(tree);
 
     // defining name of file with archiving information
     std::string res_nf = nf_to_arch + ".sarch";
@@ -64,6 +57,14 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
 
     // open new archiving file
     std::ofstream archived(res_nf, std::ios::binary | std::ios::app);
+
+    // if original file is empty then archive
+    // also is empty and just return it's name
+    if (!file_size) {
+
+        archived.close();
+        return res_nf;
+    }
 
     // initialization of special bytes
     char first_spec_byte = 0;
@@ -84,12 +85,20 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
     //
     // write information about length
     // of each frequency in bytes
+
+    // initialize the coding
+    // tree for a specific file
+    StatTree tree(nf_to_arch, StatTree::Mode::Encrypt);
+
+    // initialize coding table using
+    // information from coding tree
+    StatTable table(tree);
     
     first_spec_byte |= tree.get_freq_length() << 1;
 
     // write information about number
     // of different butes used in tree
-    if(tree.get_num_diff_bytes() == 256){
+    if (tree.get_num_diff_bytes() == 256) {
 
         // if there are all bytes used in the tree
         first_spec_byte |= 1;
@@ -110,9 +119,13 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
     // create read buffer
     std::vector<char> Read(block_size);
 
+    // open original again
+    original.open(nf_to_arch, std::ios::binary);
+
     // the process of archiving
-    for(unsigned int i = 0; i < num_iters; i++){
-        if((i == num_iters - 1) && sz_rest){
+    for (unsigned int i = 0; i < num_iters; ++i) {
+
+        if ((i == num_iters - 1) && sz_rest) {
             // if it is the last iteration and there is the
             // rest that doesn't fill the block size completely
             
@@ -144,7 +157,7 @@ std::string StatArchiver::arch(const std::string& nf_to_arch) const {
 
     std::pair<char, unsigned int> rest = table.get_rest_of_encrypt();
 
-    if(rest.second){
+    if (rest.second) {
         // if there is a rest of encryption
 
         // open archived file again with another flags
@@ -204,11 +217,6 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
         throw Archiver::file_is_not_archive(nf_to_unarch);
     }
     
-    // initialize the coding
-    // tree for a specific file
-    // there we have already read tree
-    StatTree tree(nf_to_unarch, StatTree::Mode::Decrypt);
-
     std::string res_nf = "";
 
     if (Res_nf.size() != 0) {
@@ -220,6 +228,32 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
         // define unarchived file name as
         // substr without archive extention
         res_nf =  nf_to_unarch.substr(0, point);
+    }
+
+    // check if file with name res_nf already exist
+    std::ifstream unarch_in(res_nf, std::ios::binary);
+
+    if (unarch_in.is_open()) {
+
+        // if exist close file and throw exception
+        unarch_in.close();
+        throw Archiver::write_in_exist_file_error(res_nf);
+    }
+
+    // open new file with unarchived information
+    std::ofstream unarchived(res_nf, std::ios::binary | std::ios::app);
+
+    // get size of archived file
+    archived.seekg(0, std::ios::end);
+    std::size_t file_size = archived.tellg();
+
+    // if archived file is empty then original
+    // also is empty and just return it's name
+    if (!file_size) {
+
+        archived.close();
+        unarchived.close();
+        return res_nf;
     }
     
     // initialize temp for reading first_spec_byte
@@ -235,6 +269,13 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
     unsigned int len_rest_encr = static_cast<unsigned int>(
                                                     (first_spec_byte >> 5) & mask);
 
+    archived.close();
+
+    // initialize the coding
+    // tree for a specific file
+    // there we have already read tree
+    StatTree tree(nf_to_unarch, StatTree::Mode::Decrypt);
+
     // get number of different bytes in tree
     unsigned int num_diff_bytes = tree.get_num_diff_bytes();
 
@@ -244,11 +285,12 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
     // initialize the start position of decription
     std::size_t start_decr = 2 + (freq_length + 1) * num_diff_bytes;
 
+    // open file with archived information again
+    archived.open(nf_to_unarch, std::ios::binary);
+
     // get necessary information about archived file 
 
-    // get size of file
-    archived.seekg(0, std::ios::end);
-    std::size_t file_size = archived.tellg();
+    // go to start decryption position
     archived.seekg(start_decr, std::ios::beg);
 
     // initialize the read block size
@@ -268,25 +310,12 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
     // create read buffer
     std::vector<char> Read(block_size);
 
-    // check if file with name res_nf already exist
-    std::ifstream unarch_in(res_nf, std::ios::binary);
-
-    if (unarch_in.is_open()) {
-
-        // if exist close file and throw exception
-        unarch_in.close();
-        throw Archiver::write_in_exist_file_error(res_nf);
-    }
-
-    // open new file with unarchived information
-    std::ofstream unarchived(res_nf, std::ios::binary | std::ios::app);
-
-    if(len_rest_encr){
+    if (len_rest_encr) {
         // if there is a rest of encrypting
         // with less than 8 significant bits
         // do special case of decrypting
 
-        if(!sz_rest){
+        if (!sz_rest) {
             // if there is no rest that doesn't
             // fill block size completely
             // we need to have rest in order
@@ -302,7 +331,7 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
         }
 
         // simple decryption
-        for(unsigned int i = 0; i < num_iters; i++){
+        for (unsigned int i = 0; i < num_iters; ++i) {
 
             // read block of information from archived file
             archived.read(&Read[0], Read.size());
@@ -315,7 +344,7 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
         }
 
         // special case of decryption
-        if(sz_rest > 1){
+        if (sz_rest > 1) {
             // if rest block doesn't consist
             // of only one rest byte
             
@@ -352,15 +381,15 @@ std::string StatArchiver::unarch(const std::string& nf_to_unarch, const std::str
     } else {
         // if there is no rest of encryption
 
-        if(sz_rest){
+        if (sz_rest) {
             // if there is rest that doesn't
             // fill block size completely
             
-            num_iters++;
+            ++num_iters;
         }
 
-        for(unsigned int i = 0; i < num_iters; i++){
-            if((i == num_iters - 1) && sz_rest){
+        for (unsigned int i = 0; i < num_iters; ++i) {
+            if ((i == num_iters - 1) && sz_rest) {
                 // if it is the last iteration and there is the
                 // rest that doesn't fill the block size completely
 

@@ -16,38 +16,11 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
         // if not throw exception
         throw Archiver::cant_open_file_error(nf_to_arch);
     }
-
-    // get necessary information about file
     
     // get size of file
     original.seekg(0, std::ios::end);
     std::size_t file_size = static_cast<std::size_t>(original.tellg());
     original.seekg(0, std::ios::beg);
-
-    // set read block size
-    std::size_t block_size = 100;
-
-    // calculate number of iterations
-    std::size_t num_iters = file_size / block_size;
-
-    // calculate the rest that doesn't
-    // fill block_size completely
-    std::size_t rest_file = file_size % block_size;
-
-    if(rest_file){
-        // if there is rest of file that
-        // doesn't fill block size completely
-        
-        num_iters++;
-    }
-
-    // initialize coding tree
-    DynTree tree;
-
-    // initialize coding table for encrypting
-    // with help of information from tree
-    // DynTable refers to DynTree while encoding
-    DynTable table(tree);
 
     // defining name of archived file
     std::string res_nf = nf_to_arch + ".darch";
@@ -65,6 +38,41 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
     // open new archived file
     std::ofstream archived(res_nf, std::ios::binary | std::ios::app);
 
+    // if original file is empty then archive
+    // also is empty and just return it's name
+    if (!file_size) {
+
+        archived.close();
+        return res_nf;
+    }
+
+    // get necessary information about file
+
+    // set read block size
+    std::size_t block_size = 100;
+
+    // calculate number of iterations
+    std::size_t num_iters = file_size / block_size;
+
+    // calculate the rest that doesn't
+    // fill block_size completely
+    std::size_t rest_file = file_size % block_size;
+
+    if (rest_file) {
+        // if there is rest of file that
+        // doesn't fill block size completely
+        
+        ++num_iters;
+    }
+
+    // initialize coding tree
+    DynTree tree;
+
+    // initialize coding table for encrypting
+    // with help of information from tree
+    // DynTable refers to DynTree while encoding
+    DynTable table(tree);
+
     // output the byte with information about length
     // of rest byte (in bits)
     // now it has zero value, it will change farther
@@ -75,9 +83,9 @@ std::string DynArchiver::arch(const std::string& nf_to_arch) const {
     std::vector<char> Read(block_size);
 
     // the process of archiving
-    for(unsigned int i = 0; i < num_iters; i++){
+    for (unsigned int i = 0; i < num_iters; ++i) {
 
-        if((i == num_iters - 1) && rest_file){
+        if ((i == num_iters - 1) && rest_file) {
             // if it is the last iteration and there is the
             // rest that doesn't fill the block size completely
             
@@ -170,6 +178,32 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
         res_nf =  nf_to_unarch.substr(0, point);
     }
 
+    // check if file with name res_nf already exist
+    std::ifstream unarch_in(res_nf, std::ios::binary);
+
+    if (unarch_in.is_open()) {
+
+        // if exist close file and throw exception
+        unarch_in.close();
+        throw Archiver::write_in_exist_file_error(res_nf);
+    }
+
+    // open new file with unarchived information
+    std::ofstream unarchived(res_nf, std::ios::binary | std::ios::app);
+
+    // get size of archived file
+    archived.seekg(0, std::ios::end);
+    std::size_t file_size = archived.tellg();
+
+    // if archived file is empty then original
+    // also is empty and just return it's name
+    if (!file_size) {
+
+        archived.close();
+        unarchived.close();
+        return res_nf;
+    }
+
     // get length of encryption rest
     char len_rest_encr = 0; 
     archived >> len_rest_encr;
@@ -194,9 +228,7 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
 
     // get necessary information about file
 
-    // get size of file
-    archived.seekg(0, std::ios::end);
-    std::size_t file_size = archived.tellg();
+    // go to start decription position
     archived.seekg(start_decr, std::ios::beg);
 
     // initialize the read block size
@@ -216,31 +248,18 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
     // create read buffer
     std::vector<char> Read(block_size);
 
-    // check if file with name res_nf already exist
-    std::ifstream unarch_in(res_nf, std::ios::binary);
-
-    if (unarch_in.is_open()) {
-
-        // if exist close file and throw exception
-        unarch_in.close();
-        throw Archiver::write_in_exist_file_error(res_nf);
-    }
-
-    // open new file with unarchived information
-    std::ofstream unarchived(res_nf, std::ios::binary | std::ios::app);
-
-    if(len_rest_encr){
+    if (len_rest_encr) {
         // if there is a rest of encrypting
         // with less than 8 significant bits
 
-        if(!sz_rest){
+        if (!sz_rest) {
             // if there is no rest that doesn't
             // fill block size completely
             
             // reduce number of iterations with
             // simple decryption make one more
             // special decription instead
-            num_iters--;
+            --num_iters;
 
             // change size of rest from zero
             // to size of read block
@@ -248,7 +267,7 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
         }
 
         // simple decryption
-        for(unsigned int i = 0; i < num_iters; i++){
+        for (unsigned int i = 0; i < num_iters; ++i) {
 
             // read block of information from archived file
             archived.read(&Read[0], Read.size());
@@ -261,7 +280,7 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
         }
 
         // special case of decryption
-        if(sz_rest > 1){
+        if (sz_rest > 1) {
 
             // if rest block doesn't consist
             // of only one rest byte
@@ -305,12 +324,12 @@ std::string DynArchiver::unarch(const std::string& nf_to_unarch, const std::stri
             // if there is rest that doesn't
             // fill block size completely
             
-            num_iters++;
+            ++num_iters;
         }
 
-        for(unsigned int i = 0; i < num_iters; i++){
+        for (unsigned int i = 0; i < num_iters; ++i) {
 
-            if((i == num_iters - 1) && sz_rest){
+            if ((i == num_iters - 1) && sz_rest) {
 
                 // if it is the last iteration and there is the
                 // rest that doesn't fill the block size completely
